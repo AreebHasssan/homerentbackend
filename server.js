@@ -23,13 +23,32 @@ const Port = process.env.PORT || 5000;
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  process.env.FRONTEND_URL,
+  process.env.CORS_ORIGIN,
+  process.env.VITE_API_URL,
+].filter(Boolean);
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  return (
+    /https:\/\/.*\.vercel\.app$/i.test(origin) ||
+    /https:\/\/.*\.railway\.app$/i.test(origin)
+  );
+};
+
 // Create HTTP server
 const server = http.createServer(app);
 
 // Create Socket.IO server
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: (origin, callback) => {
+      callback(null, isAllowedOrigin(origin));
+    },
     credentials: true,
   },
 });
@@ -45,8 +64,10 @@ app.use((req, res, next) => {
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: (origin, callback) => {
+      callback(null, isAllowedOrigin(origin));
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: [
       "Content-Type",
       "Authorization",
