@@ -38,12 +38,14 @@ const register = async (req, res) => {
       memberSince: newuser.memberSince,
     };
 
+    const isProduction = process.env.NODE_ENV === "production";
+
     res
       .status(201)
       .cookie("token", token, {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         maxAge: 4 * 60 * 60 * 1000,
       })
       .json({
@@ -89,12 +91,14 @@ const login = async (req, res) => {
       process.env.JWT_SECRET || "CLIENT_SECRET_KEY",
       { expiresIn: "4h" },
     );
+    const isProduction = process.env.NODE_ENV === "production";
+
     return res
       .status(200)
       .cookie("token", token, {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         maxAge: 4 * 60 * 60 * 1000,
       })
       .json({
@@ -119,11 +123,13 @@ const login = async (req, res) => {
 };
 
 const logoutUser = (req, res) => {
+  const isProduction = process.env.NODE_ENV === "production";
+
   res
     .clearCookie("token", {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
     })
     .json({
       success: true,
