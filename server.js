@@ -26,18 +26,54 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
+  "https://home-rent-app-hytn.vercel.app",
   process.env.FRONTEND_URL,
   process.env.CORS_ORIGIN,
   process.env.VITE_API_URL,
 ].filter(Boolean);
 
+const normalizeOrigin = (origin) => {
+  if (!origin) return null;
+  try {
+    return new URL(origin).origin;
+  } catch {
+    return null;
+  }
+};
+
 const isAllowedOrigin = (origin) => {
   if (!origin) return true;
-  if (allowedOrigins.includes(origin)) return true;
+
+  const normalizedOrigin = normalizeOrigin(origin);
+  if (!normalizedOrigin) return false;
+  if (allowedOrigins.includes(normalizedOrigin)) return true;
+
   return (
-    /https:\/\/.*\.vercel\.app$/i.test(origin) ||
-    /https:\/\/.*\.railway\.app$/i.test(origin)
+    /https:\/\/([a-z0-9-]+\.)*vercel\.app$/i.test(normalizedOrigin) ||
+    /https:\/\/([a-z0-9-]+\.)*railway\.app$/i.test(normalizedOrigin)
   );
+};
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (isAllowedOrigin(origin)) {
+      callback(null, origin || true);
+    } else {
+      callback(null, false);
+    }
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "Cache-Control",
+    "Expires",
+    "Pragma",
+    "Cookie",
+    "Origin",
+    "Accept",
+  ],
+  credentials: true,
 };
 
 // Create HTTP server
@@ -62,22 +98,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      callback(null, isAllowedOrigin(origin));
-    },
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "Cache-Control",
-      "Expires",
-      "Pragma",
-    ],
-    credentials: true,
-  }),
-);
+app.use(cors(corsOptions));
 
 app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
