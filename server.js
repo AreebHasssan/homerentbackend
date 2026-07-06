@@ -76,6 +76,30 @@ const corsOptions = {
   credentials: true,
 };
 
+const applyCorsHeaders = (req, res, next) => {
+  const origin = req.headers.origin;
+
+  if (isAllowedOrigin(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin || "*");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Vary", "Origin");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+    );
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, Cache-Control, Expires, Pragma, Cookie, Origin, Accept",
+    );
+  }
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
+};
+
 // Create HTTP server
 const server = http.createServer(app);
 
@@ -98,6 +122,7 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use(applyCorsHeaders);
 app.use(cors(corsOptions));
 
 app.use(cookieParser());
