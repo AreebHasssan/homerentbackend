@@ -78,9 +78,10 @@ const corsOptions = {
 
 const applyCorsHeaders = (req, res, next) => {
   const origin = req.headers.origin;
+  const allowedOrigin = isAllowedOrigin(origin) ? origin || "*" : null;
 
-  if (isAllowedOrigin(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin || "*");
+  if (allowedOrigin) {
+    res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Vary", "Origin");
     res.setHeader(
@@ -94,7 +95,7 @@ const applyCorsHeaders = (req, res, next) => {
   }
 
   if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
+    return res.status(204).end();
   }
 
   next();
